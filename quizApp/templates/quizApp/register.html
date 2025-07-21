@@ -1,0 +1,34 @@
+{% extends "quizApp/layout.html" %}
+{% block body %}
+    <h2>Register</h2>
+    {% if message %}
+        <div>{{ message }}</div>
+    {% endif %}
+    <form action="{% url 'register' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <input type="text" class="form-control" name="first_name" placeholder="first-name">
+        </div>
+        <div class="form-group">
+            <input type="text" class="form-control" name="last_name" placeholder="last-name">
+        </div>
+        <div class="form-group">
+            <input autofocus type="email" class="form-control" name="email" placeholder="Email">
+        </div>
+        <div class="form-group">
+            <input type="password" class="form-control" name="password" placeholder="Password">
+        </div>
+        <div class="form-group">
+            <input type="password" class="form-control" name="confirmation" placeholder="Confirm Your Password">
+        </div>
+        <div class="form-group">
+            <label for="user_type">User Type:</label>
+            <select name="user_type" id="user_type" class="form-control">
+                <option value="Student">Student</option>
+                <option value="Teacher">Teacher</option>
+            </select>
+        </div>
+        <input class="btn btn-primary" type="submit" value="register">
+    </form>
+    Already have an account? <a href="{% url 'login' %}">Login here.</a>
+{% endblock %}
