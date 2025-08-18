@@ -244,7 +244,23 @@ def score(request, testID):
         return render(request, 'quizApp/score.html', {
             "score": score,
             "total": total,
-            "test": test.serialize()
+            "test": test.serialize(),
+            "questions":[
+                {
+                    **question.serialize(),
+                    # 'next' will give us the first occurence otherwise NULL
+                    "selected_option":next(
+                        (answer.selected_option 
+                         for answer in student_test.answers.all() 
+                         if answer.question_id == question.id),
+                         # answer is a StudentAnswer object
+                         # answer.question is a foreign key to Question object
+                         # answer.question_id is a django shortcut for id of that Question object
+                        None
+                    )
+                }
+                for question in test.questions.all()
+            ]
         })
 
     return JsonResponse({'error': 'GET request required.'}, status=400)
@@ -376,4 +392,3 @@ def add_question(request, testID):
         return JsonResponse({'success': True, 'question': question_text})
     
     return JsonResponse({'error': 'POST method required'}, status=405)
-

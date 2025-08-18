@@ -93,6 +93,15 @@ class Question(models.Model):
 
     def __str__(self):
         return f"{self.question_text[:50]}...."
+    def serialize(self):
+        return {
+            "question_text":self.question_text,
+            "option_a":self.option_a,
+            "option_b":self.option_b,
+            "option_c":self.option_c,
+            "option_d":self.option_d,
+            "correct_option":self.correct_option
+        }
 
 # Tracks which student attempted which test and their final score.   
 class StudentTest(models.Model):

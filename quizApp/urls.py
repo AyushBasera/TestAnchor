@@ -11,7 +11,6 @@ urlpatterns = [
     path("submit/<int:test_id>",views.submitAQuiz,name="submitAQuiz"),
     path("score/<int:testID>/<int:studentID>", views.student_score_detail, name="student_score_detail"),
 
-
     
     path("scores",views.scores,name="scores"),
     path("score/<int:testID>",views.score,name="score"),

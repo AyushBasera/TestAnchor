@@ -1,7 +1,35 @@
 {% extends "quizApp/layout.html" %}
+
 {% block body %}
     <h2>Test Submitted!</h2>
+    <a href="{% url 'index' %}" class="btn btn-primary">Go Back</a>
+
     <p><strong>Title:</strong> {{ test.title }}</p>
     <p><strong>Your Score:</strong> {{ score }} / {{ total }}</p>
-    <a href="{% url 'index' %}" class="btn btn-primary">Go Back</a>
+
+    <hr>
+
+    {% for question in questions %}
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <p><strong>Q{{ forloop.counter }}:</strong> {{ question.question_text }}</p>
+            <ul>
+                <li>A. {{ question.option_a }}</li>
+                <li>B. {{ question.option_b }}</li>
+                <li>C. {{ question.option_c }}</li>
+                <li>D. {{ question.option_d }}</li>
+            </ul>
+            <p>
+                <strong>Correct Option:</strong> {{ question.correct_option }} <br>
+                <strong>Your Selected Option:</strong> 
+                {% if question.selected_option %}
+                    {{ question.selected_option }}
+                {% else %}
+                    <span class="text-danger">Not Answered</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    {% endfor %}
 {% endblock %}
+

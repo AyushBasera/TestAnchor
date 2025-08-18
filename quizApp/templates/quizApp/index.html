@@ -10,7 +10,7 @@
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <h2>Quiz Generator</h2>
+    <h2>Quiz App</h2>
     {% if request.user.user_type == "Student" %}
     <button class="btn btn-sm btn-outline-primary" id="JoinQuiz">JoinQuiz</button>
     <button class="btn btn-sm btn-outline-primary" id="ViewScore">ViewScore</button>
@@ -19,11 +19,13 @@
     <div id="whenViewScore">
         <!-- to view score -->
         <div><h2>View Score of all your previous tests</h2></div>
+        <a href="{% url 'index' %}" class="btn btn-primary mb-2">Go_Back</a>
         <div id="whenViewScore1"></div>
     </div> 
     <div id="whenJoinQuiz">
         <!-- to join a quiz -->
         <div><h2>Join A Quiz By Providing Its RoomID</h2></div>
+        <a href="{% url 'index' %}" class="btn btn-primary mb-2">Go_Back</a>
         {% if join_error %}
             <div id="joinAlert" class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ join_error }}
@@ -58,6 +60,7 @@
     <div id="whenCreateQuiz">
         <!-- to create quiz -->
         <h3>Create a New Quiz</h3>
+        <a href="{% url 'index' %}" class="btn btn-primary mb-2 ">Go_Back</a>
         <form id="createQuizForm">
             {% csrf_token %}
             <input type="text" name="title" class="form-control mb-2" placeholder="Quiz Title" required>
@@ -85,11 +88,13 @@
     </div> 
     <div id="whenStudentScore">
         <h3>View Score of the students</h3>
+        <a href="{% url 'index' %}" class="btn btn-primary mb-2">Go_Back</a>
         <!-- to view Student Score -->
         <div id="whenStudentScore1"></div>
     </div>
     <div id="studentList" style="display: none;">
         <h3>Student List (Ranked)</h3>
+        <a href="{% url 'index' %}" class="btn btn-primary mb-2">Go_Back</a>
         <div id="studentListContent"></div>
     </div>
 
@@ -223,11 +228,17 @@
                 new_quiz.innerHTML=`
                 <h5>${single_quiz.title}</h5>
                 <h6>appeared/allowed: ${single_quiz.total_students_appeared}/${single_quiz.total_allowed_students}</h6>
-                <h6>start-Time / duration: ${single_quiz.start_time} / ${single_quiz.duration_minutes}</h6>
+                <h6>start-Time / duration: ${formatDate(single_quiz.start_time)} / ${single_quiz.duration_minutes} minutes</h6>
                 <h6>RoomID: ${single_quiz.room_id}</h6>
                 <h6>testID: ${single_quiz.id}</h6>
                 `;
-                
+                function formatDate(isoString) {
+                    const date = new Date(isoString);
+                    return date.toLocaleString('en-GB', {
+                        day: '2-digit', month: 'short', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                }
                 new_quiz.className='list-group-item mb-1 border border-dark px-2';
 
                 new_quiz.addEventListener('click',() => view_the_student_list(single_quiz.id))
