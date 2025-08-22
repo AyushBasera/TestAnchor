@@ -4,9 +4,20 @@ from django.contrib.auth import authenticate,login,logout,get_user_model
 from .models import User,Test,StudentTest,StudentAnswer,Question
 from django.utils import timezone
 from django.db import IntegrityError
-from django.http import JsonResponse
+from django.http import JsonResponse,HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 
+
+from functools import wraps
+def teacher_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request,*args,**kwargs):
+        if not request.user.is_authenticated:
+            return redirect("login")
+        if request.user.user_type != "Teacher":
+            return redirect("index")
+        return view_func(request,*args,**kwargs)
+    return _wrapped_view
 
 # Create your views here.
 def login_view(request):
@@ -143,8 +154,6 @@ def DirectJoin(request, roomID):
         "remaining_seconds": remaining_seconds
     })
 
-
-    
 
 def submitAQuiz(request,test_id):
     if request.method == 'POST':
@@ -311,7 +320,7 @@ def createQuiz(request):
         title = request.POST.get("title")
         start_time = request.POST.get("start_time")
         duration = request.POST.get("duration_minutes")
-        allowed_student_ids = request.POST.getlist("allowed_students[]")  # <- Important
+        allowed_student_ids = request.POST.getlist("allowed_students[]")  
 
         if not all([title, start_time, duration]):
             return JsonResponse({'error': 'All fields are required.'}, status=400)
@@ -392,3 +401,123 @@ def add_question(request, testID):
         return JsonResponse({'success': True, 'question': question_text})
     
     return JsonResponse({'error': 'POST method required'}, status=405)
+
+
+def my_tests(request):
+    if not request.user.is_authenticated or request.user.user_type !="Student":
+        return HttpResponseRedirect(reverse("login"))
+    
+    now = timezone.now()
+
+    # All tests this student is allowed to attempt
+    tests = Test.objects.filter(allowed_students=request.user).order_by("-start_time")
+
+    upcoming_tests = []
+    previous_tests = []
+
+    for test in tests:
+        end_time = test.start_time + timezone.timedelta(minutes=test.duration_minutes)
+
+        if end_time >= now:
+            # check if already submitted
+            if not StudentTest.objects.filter(student=request.user, test=test).exists():
+                upcoming_tests.append(test) 
+            else:
+                previous_tests.append(test)
+        else:
+            previous_tests.append(test)  
+
+    return render(request, "quizApp/my_tests.html", {
+            "upcoming_tests": upcoming_tests,
+            "previous_tests": previous_tests,
+        })
+
+from .forms import TestForm, QuestionForm
+from django.shortcuts import redirect
+
+from datetime import timedelta
+@teacher_required
+def visit_test(request,testID):
+    if not request.user.is_authenticated or request.user.user_type!="Teacher":
+        return HttpResponseRedirect(reverse("login"))
+    
+    # from here we will return all the questions of that test
+    test = get_object_or_404(Test,id=testID)
+    questions = test.questions.all()
+    editable=( test.start_time - timezone.now()) >= timedelta(minutes=10)
+    return render(request,"quizApp/visit_test.html",{
+        "test":test,
+        "questions":questions,
+        "editable":editable
+    })
+
+@teacher_required
+def update_test(request, testID):
+    test = get_object_or_404(Test, id=testID)
+    if test.start_time - timezone.now() < timedelta(minutes=10):
+        return HttpResponseForbidden("You cannot update test within 10 minutes of the test start.")
+    if request.method == "POST":
+        form = TestForm(request.POST, instance=test)
+        if form.is_valid():
+            form.save()
+            return redirect("visit_test",testID=test.id)
+    else:
+        form = TestForm(instance=test)
+    return render(request, "quizApp/update_test.html",{"form":form,"test":test})
+
+@teacher_required
+def delete_test(request, testID):
+    test=get_object_or_404(Test,id=testID)
+    if request.method == "POST":
+        test.delete()
+        return redirect("index")
+    return redirect("visit_test",testID=test.id)
+
+@teacher_required
+def add_question_update(request, testID):
+    test = get_object_or_404(Test,id=testID)
+    if test.start_time - timezone.now() < timedelta(minutes=10):
+        return HttpResponseForbidden("You cannot add questions within 10 minutes of the test start.")
+    if request.method == "POST":
+        form = QuestionForm(request.POST)
+        if form.is_valid():
+            question=form.save(commit=False)
+            question.test = test
+            question.save()
+            return redirect("visit_test",testID=test.id)
+    else:
+        form = QuestionForm()
+    return render(request,"quizApp/add_question.html",{"form":form,"test":test})
+
+@teacher_required
+def edit_question(request, questionID):
+    question = get_object_or_404(Question, id=questionID)
+    if question.test.start_time - timezone.now() < timedelta(minutes=10):
+        return HttpResponseForbidden("You cannot edit questions within 10 minutes of the test start.")
+    if request.method == "POST":
+        form = QuestionForm(request.POST,instance=question)
+        if form.is_valid():
+            form.save()
+            return redirect("visit_test",testID=question.test.id)
+        
+    else:
+        form = QuestionForm(instance=question)
+    return render(request, "quizApp/edit_question.html",{"form":form,"question":question})
+
+
+@teacher_required
+def delete_question(request, questionID):
+    question = get_object_or_404(Question, id=questionID)
+    if question.test.start_time - timezone.now() < timedelta(minutes=10):
+        return HttpResponseForbidden("You cannot delete questions within 10 minutes of the test start.")
+    testID=question.test.id
+    if request.method == "POST":
+        question.delete()
+        return redirect("visit_test",testID=testID)
+    return redirect("visit_test",testID=testID)
+
+
+
+        
+        
+

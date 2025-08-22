@@ -1,0 +1,11 @@
+{% extends 'quizApp/layout.html' %}
+{% block body %}
+<h2>Add Question to {{ test.title }}</h2>
+<a href="{% url 'index' %}" class="btn btn-primary">Home</a>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="{% url 'visit_test' test.id %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

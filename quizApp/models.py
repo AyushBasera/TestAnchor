@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-
-# Create your models here.
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 # Used to distinguish between Teacher and Student.
 from django.contrib.auth.models import AbstractUser, Group, Permission
@@ -34,24 +34,27 @@ class User(AbstractUser):
 
 import string, random
 
-def generate_unique_room_id():
-    from .models import Test
-    while True:
-        room_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))  # Example: "A9C2XZ"
-        if not Test.objects.filter(room_id=room_id).exists():
-            return room_id
+
 
 # Represents a test created by a teacher.
 class Test(models.Model):
-    teacher = models.ForeignKey(User,on_delete=models.CASCADE,limit_choices_to={'role':'Teacher'})
+    teacher = models.ForeignKey(User,on_delete=models.CASCADE,limit_choices_to={'user_type':'Teacher'})
     title = models.CharField(max_length=100)
     room_id = models.CharField(max_length=20,unique=True,blank=True)
-    allowed_students = models.ManyToManyField(User,related_name="assigned_tests",blank=True)
+    allowed_students = models.ManyToManyField(User,related_name="assigned_tests",blank=True,
+                                              limit_choices_to={'user_type': 'Student'})
     start_time=models.DateTimeField()
     duration_minutes=models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def clean(self):
+        # Enforce start time must be in future
+        if self.start_time <= timezone.now():
+            raise ValidationError({"start_time": "Start time must be in the future."})
+
     def save(self, *args, **kwargs):
+        # Run validation first
+        self.full_clean()
         if not self.room_id:
             self.room_id = generate_unique_room_id()
         super().save(*args, **kwargs)
@@ -81,6 +84,12 @@ class Test(models.Model):
             "total_students_appeared":StudentTest.objects.filter(test=self).count()
         }
 
+def generate_unique_room_id():
+    while True:
+        room_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)) 
+        if not Test.objects.filter(room_id=room_id).exists():
+            return room_id
+        
 # Linked to a Test. Stores one question and its options. 
 class Question(models.Model):
     test = models.ForeignKey(Test,on_delete=models.CASCADE,related_name='questions')
@@ -90,6 +99,16 @@ class Question(models.Model):
     option_c = models.CharField(max_length=200)
     option_d = models.CharField(max_length=200)
     correct_option = models.CharField(max_length=1)
+
+    def clean(self):
+        # Ensure correct_option is valid
+        if self.correct_option not in ["A", "B", "C", "D"]:
+            raise ValidationError({"correct_option": "Correct option must be one of A, B, C, or D."})
+
+    def save(self, *args, **kwargs):
+        # Run validation first
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.question_text[:50]}...."
@@ -105,7 +124,7 @@ class Question(models.Model):
 
 # Tracks which student attempted which test and their final score.   
 class StudentTest(models.Model):
-    student = models.ForeignKey(User,on_delete=models.CASCADE,limit_choices_to={'role':'student'})
+    student = models.ForeignKey(User,on_delete=models.CASCADE,limit_choices_to={'user_type':'student'})
     test = models.ForeignKey(Test,on_delete=models.CASCADE)
     score = models.IntegerField()
     rank = models.IntegerField(null=True,blank=True)

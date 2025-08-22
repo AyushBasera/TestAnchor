@@ -1,0 +1,52 @@
+{% extends "quizApp/layout.html" %}
+{% block body %}
+<h2>Manage Test: {{ test.title }}</h2>
+<p><strong>Room ID:</strong> {{ test.room_id }}</p>
+<p><strong>Start:</strong> {{ test.start_time }}</p>
+<p><strong>Duration:</strong> {{ test.duration_minutes }} mins</p>
+
+<a href="{% url 'index' %}" class="btn btn-primary mb-3">Home</a>
+<!-- Top Buttons -->
+<div class="mb-3">
+    {% if editable %}
+        <a href="{% url 'update_test' test.id %}" class="btn btn-warning">Update Test Info</a>
+        <a href="{% url 'add_question_update' test.id %}" class="btn btn-success">Add Question</a>
+    {% endif %}
+    <form method="POST" action="{% url 'delete_test' test.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('Are you sure you want to delete this test?')">
+            Delete Test
+        </button>
+    </form>
+</div>
+
+<hr>
+
+<!-- Questions List -->
+<h4>Questions</h4>
+{% for q in questions %}
+<div class="card mb-2 p-2">
+    <p><strong>Q{{ forloop.counter }}:</strong> {{ q.question_text }}</p>
+    <ul>
+        <li>A: {{ q.option_a }}</li>
+        <li>B: {{ q.option_b }}</li>
+        <li>C: {{ q.option_c }}</li>
+        <li>D: {{ q.option_d }}</li>
+    </ul>
+    <p><em>Correct: {{ q.correct_option }}</em></p>
+
+    <!-- Action buttons per question -->
+    {% if editable %}
+        <a href="{% url 'edit_question' q.id %}" class="btn btn-sm btn-primary">Edit</a>
+        <form method="post" action="{% url 'delete_question' q.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('Delete this question?')">
+                Delete Question
+            </button>
+        </form>
+    {% endif %}
+</div>
+{% empty %}
+<p>No questions added yet.</p>
+{% endfor %}
+{% endblock %}

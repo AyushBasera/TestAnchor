@@ -1,0 +1,12 @@
+{% extends 'quizApp/layout.html' %}
+{% block body %}
+<!-- we have not provided any action URL so form is automatically submitted to 
+same url user is currently on -->
+<a href="{% url 'index' %}" class="btn btn-primary">Home</a>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a href="{% url 'visit_test' test.id %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

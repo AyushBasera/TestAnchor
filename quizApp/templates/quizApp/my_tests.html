@@ -1,0 +1,36 @@
+{% extends 'quizApp/layout.html' %}
+{% block body %}
+<h2>My Tests</h2>
+<a href="{% url 'index' %}" class="btn btn-primary mb-2">Home</a>
+<h3>Upcoming / Ongoing Tests</h3>
+{% if upcoming_tests %}
+  <ul>
+    {% for test in upcoming_tests %}
+      <li>
+        <strong>{{ test.title }}</strong> <br>
+        RoomID: {{ test.room_id }} <br>
+        Starts: {{ test.start_time }} <br>
+        Duration: {{ test.duration_minutes }} minutes
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No upcoming tests.</p>
+{% endif %}
+
+<h3>Previous Tests</h3>
+{% if previous_tests %}
+  <ul>
+    {% for test in previous_tests %}
+      <li>
+        <strong>{{ test.title }}</strong> <br>
+        RoomID: {{ test.room_id }} <br>
+        Started: {{ test.start_time }} <br>
+        Duration: {{ test.duration_minutes }} minutes
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No previous tests.</p>
+{% endif %}
+{% endblock %}

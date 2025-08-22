@@ -1,7 +1,8 @@
 {% extends "quizApp/layout.html" %}
 {% block body %}
+<a href="{% url 'index' %}" class="btn btn-primary">Home</a>
 <div><h3>Title: {{ test.title }}</h3></div>
-<div><h5>UserName: {{ request.user.name }}</h5></div>
+<div><h5>UserName: {{ request.user.username }}</h5></div>
 <div><strong>Time Left: </strong><span id="timeLeft"></span></div>
 <form method='POST' action="{% url 'submitAQuiz' test.id %}">
     {% csrf_token %}

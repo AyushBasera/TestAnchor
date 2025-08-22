@@ -32,16 +32,11 @@
 {% block script %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("Script is running");
     const form = document.querySelector('#questionForm');
     if (form) {
-        console.log("Form found!");
 
         form.addEventListener('submit', function(event) {
-            alert("JS submit triggered");
             event.preventDefault();  
-
-            console.log("Form submitted via JS");
 
             const testID = document.querySelector('#test_id').value;
             const formData = new FormData(form); 
@@ -54,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 console.log(data);
                 if (data.success) {
-                    alert("Question added!");
                     form.reset();  
 
                     const qList = document.querySelector('#questionList');
