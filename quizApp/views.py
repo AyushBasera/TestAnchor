@@ -227,7 +227,15 @@ def scores(request):
         return JsonResponse({'error': 'Only students can access this view.'}, status=403)
 
     if request.method == 'GET':
-        quizes = StudentTest.objects.filter(student=request.user).order_by("-submitted_at")
+        all_quizes = StudentTest.objects.filter(student=request.user).order_by("-submitted_at")
+        quizes = []
+        now = timezone.now()
+        for quiz in all_quizes:
+            test = quiz.test
+            end_time = test.start_time + timezone.timedelta(minutes=test.duration_minutes)
+            if end_time <= now:
+                quizes.append(quiz)
+
         return JsonResponse([quiz.serialize() for quiz in quizes], safe=False)
 
     return JsonResponse({'error': 'GET request required.'}, status=400)
@@ -242,6 +250,12 @@ def score(request, testID):
 
     if request.method == 'GET':
         test = get_object_or_404(Test, pk=testID)
+
+        now = timezone.now()
+        end_time = test.start_time + timezone.timedelta(minutes=test.duration_minutes)
+        if end_time > now:
+            return JsonResponse({'error': 'Score is available only after the test has ended.'}, status=403)
+        
         try:
             student_test = StudentTest.objects.get(student=request.user, test=test)
         except StudentTest.DoesNotExist:
