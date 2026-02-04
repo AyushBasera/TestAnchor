@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-# Used to distinguish between Teacher and Student.
+
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 
@@ -16,7 +16,7 @@ class User(AbstractUser):
 
     groups = models.ManyToManyField(
         Group,
-        related_name='quizapp_user_set',  # Avoid conflict with default User
+        related_name='quizapp_user_set',  
         blank=True,
         help_text='The groups this user belongs to.',
         verbose_name='groups'
@@ -24,7 +24,7 @@ class User(AbstractUser):
 
     user_permissions = models.ManyToManyField(
         Permission,
-        related_name='quizapp_user_permissions',  # Avoid conflict
+        related_name='quizapp_user_permissions', 
         blank=True,
         help_text='Specific permissions for this user.',
         verbose_name='user permissions'
